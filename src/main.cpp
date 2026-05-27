@@ -7,7 +7,7 @@
 #include <fcntl.h>
 using namespace std;
 
-// History
+// History System
 vector<string> history;
 const int MAX_HISTORY = 100;
 
@@ -17,7 +17,7 @@ void addToHistory(const string& cmd) {
 	history.push_back(cmd);
 }
 
-// Parse
+// Token Parsing
 vector<string> parse(const string& input) {
 	vector<string> tokens;
 	stringstream ss(input);
@@ -42,7 +42,7 @@ pair<vector<string>, vector<string>> splitAtPipe(const vector<string>& tokens) {
 	return {left, right};
 }
 
-// Built-ins
+// Built-in Shell Commands
 bool handleBuiltin(const vector<string>& tokens) {
 	if (tokens.empty()) return true;
 	string cmd = tokens[0];
@@ -78,7 +78,7 @@ bool handleBuiltin(const vector<string>& tokens) {
 	return false;
 }
 
-// Execute
+// Standard Command Execution (with Redirection & Background support)
 void execute(vector<string> tokens) {
 	if (tokens.empty()) return;
 
@@ -95,6 +95,8 @@ void execute(vector<string> tokens) {
 		else if (tokens[i] == "<" && i + 1 < (int)tokens.size()) inputFile = tokens[++i];
 		else cleanTokens.push_back(tokens[i]);
 	}
+
+	if (cleanTokens.empty()) return;
 
 	vector<char*> args;
 	for (string& s : cleanTokens) args.push_back(&s[0]);
@@ -121,6 +123,7 @@ void execute(vector<string> tokens) {
 	}
 }
 
+// Pipeline Execution Engine
 void executePipe(vector<string>& left, vector<string>& right) {
 	int fd[2]; pipe(fd);
 
@@ -145,7 +148,7 @@ void executePipe(vector<string>& left, vector<string>& right) {
 	waitpid(p1, nullptr, 0); waitpid(p2, nullptr, 0);
 }
 
-// Main Loop
+// REPL Main Loop
 int main() {
 	string input;
 	cout << "Welcome to myshell. Type 'help' for commands.\n";
@@ -163,7 +166,13 @@ int main() {
 		if (!handleBuiltin(tokens)) {
 			if (hasPipe(tokens)) {
 				auto [left, right] = splitAtPipe(tokens);
-				executePipe(left, right);
+				
+				// DEFENSIVE GUARD: Validate pipeline syntax boundaries
+				if (left.empty() || right.empty()) {
+					cerr << "myshell: syntax error near unexpected token '|'\n";
+				} else {
+					executePipe(left, right);
+				}
 			} else {
 				execute(tokens);
 			}
