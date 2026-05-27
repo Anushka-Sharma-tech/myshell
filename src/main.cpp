@@ -50,8 +50,11 @@ bool handleBuiltin(const vector<string>& tokens) {
 	if (cmd == "exit") { cout << "Goodbye!\n"; exit(0); }
 
 	if (cmd == "cd") {
-		if (tokens.size() < 2) chdir(getenv("HOME"));
-		else if (chdir(tokens[1].c_str()) != 0) perror("myshell: cd");
+		if (tokens.size() < 2) {
+			if (chdir(getenv("HOME")) != 0) perror("myshell: cd home");
+		} else {
+			if (chdir(tokens[1].c_str()) != 0) perror("myshell: cd");
+		}
 		return true;
 	}
 	if (cmd == "pwd") {
@@ -125,7 +128,11 @@ void execute(vector<string> tokens) {
 
 // Pipeline Execution Engine
 void executePipe(vector<string>& left, vector<string>& right) {
-	int fd[2]; pipe(fd);
+	int fd[2]; 
+	if (pipe(fd) == -1) {
+		perror("myshell: pipe failed");
+		return;
+	}
 
 	auto toArgs = [](vector<string>& t) {
 		vector<char*> a;
