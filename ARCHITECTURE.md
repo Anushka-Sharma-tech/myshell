@@ -1,4 +1,9 @@
-+-----------------------+
+# 🗺️ System Architecture & Process Flow Map
+
+The execution lifecycle of a user command through `myshell` routes through the following token evaluation and process virtualization layers:
+
+```text
+               +-----------------------+
                |      User Input       |
                +-----------------------+
                            |
